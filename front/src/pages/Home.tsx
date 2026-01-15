@@ -42,6 +42,7 @@ const Home: React.FC = () => {
 
   return (
     <Container>
+      <h1 className='text-center pt-5 m-0'>Inicio</h1>
       <ul className='list-home'>
         {list.map((item, index) => (
           <li key={index} className='shadow' onClick={() => navigate(item.rute)}>

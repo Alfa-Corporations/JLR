@@ -2,7 +2,7 @@ import type React from 'react';
 import { useState } from 'react';
 import { Container, Form, Modal, Button } from 'react-bootstrap';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Loan } from '../interface/interfaces';
+import type { Loan, Customer } from '../interface/interfaces';
 import { useNavigate } from 'react-router-dom';
 
 const Loans: React.FC = () => {
@@ -14,11 +14,16 @@ const Loans: React.FC = () => {
     return stored ? JSON.parse(stored) : [];
   });
 
+  const [customers] = useState<Customer[]>(() => {
+    const stored = localStorage.getItem('customers');
+    return stored ? JSON.parse(stored) : [];
+  });
+
   const [activeTab, setActiveTab] = useState<'activo' | 'finalizado'>('activo');
   const [search, setSearch] = useState('');
 
   const [showModal, setShowModal] = useState(false);
-  const [customerName, setCustomerName] = useState('');
+  const [customerId, setCustomerId] = useState<number | ''>('');
   const [amount, setAmount] = useState('');
   const [loanType, setLoanType] = useState<'semanal' | 'mensual'>('semanal');
 
@@ -35,11 +40,14 @@ const Loans: React.FC = () => {
      ADD LOAN
   ======================= */
   const handleAddLoan = () => {
-    if (!customerName || !amount) return;
+    if (!customerId || !amount) return;
+
+    const selectedCustomer = customers.find(c => c.id === customerId);
+    if (!selectedCustomer) return;
 
     const newLoan: Loan = {
       id: Date.now(),
-      customerName,
+      customerName: selectedCustomer.name,
       amount: Number(amount),
       type: loanType,
       status: 'activo'
@@ -47,7 +55,7 @@ const Loans: React.FC = () => {
 
     saveLoans([...loans, newLoan]);
 
-    setCustomerName('');
+    setCustomerId('');
     setAmount('');
     setLoanType('semanal');
     setShowModal(false);
@@ -95,7 +103,10 @@ const Loans: React.FC = () => {
             <li key={loan.id} className='list-group-item shadow-sm'>
               <strong>{loan.customerName}</strong>
               <br />
-              💵 ${loan.amount}
+              <svg xmlns='http://www.w3.org/2000/svg' height='24px' viewBox='0 -960 960 960' width='24px' fill='#157347'>
+                <path d='M560-440q-50 0-85-35t-35-85q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35ZM280-320q-33 0-56.5-23.5T200-400v-320q0-33 23.5-56.5T280-800h560q33 0 56.5 23.5T920-720v320q0 33-23.5 56.5T840-320H280Zm80-80h400q0-33 23.5-56.5T840-480v-160q-33 0-56.5-23.5T760-720H360q0 33-23.5 56.5T280-640v160q33 0 56.5 23.5T360-400Zm440 240H120q-33 0-56.5-23.5T40-240v-440h80v440h680v80ZM280-400v-320 320Z' />
+              </svg>{' '}
+              ${loan.amount.toFixed(2)}
             </li>
           ))}
         </motion.ul>
@@ -112,11 +123,11 @@ const Loans: React.FC = () => {
             width: '60px',
             height: '60px',
             borderRadius: '50%',
-            backgroundColor: '#228822'
+            backgroundColor: '#157347'
           }}
           className='btn shadow d-flex align-items-center justify-content-center p-0'
         >
-          <svg xmlns='http://www.w3.org/2000/svg' height='36px' viewBox='0 -960 960 960' width='36px' fill='#ffffff'>
+          <svg xmlns='http://www.w3.org/2000/svg' height='36px' viewBox='http://www.w3.org/2000/svg' width='36px' fill='#ffffff'>
             <path d='M440-440H240q-17 0-28.5-11.5T200-480q0-17 11.5-28.5T240-520h200v-200q0-17 11.5-28.5T480-760q17 0 28.5 11.5T520-720v200h200q17 0 28.5 11.5T760-480q0 17-11.5 28.5T720-440H520v200q0 17-11.5 28.5T480-200q-17 0-28.5-11.5T440-240v-200Z' />
           </svg>
         </button>
@@ -131,8 +142,15 @@ const Loans: React.FC = () => {
         <Modal.Body>
           <Form>
             <Form.Group className='mb-3'>
-              <Form.Label>Nombre del cliente</Form.Label>
-              <Form.Control value={customerName} onChange={e => setCustomerName(e.target.value)} />
+              <Form.Label>Cliente</Form.Label>
+              <Form.Select value={customerId} onChange={e => setCustomerId(e.target.value ? Number(e.target.value) : '')}>
+                <option value=''>Selecciona un cliente</option>
+                {customers.map(customer => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name}
+                  </option>
+                ))}
+              </Form.Select>
             </Form.Group>
 
             <Form.Group className='mb-3'>
